@@ -23,11 +23,11 @@ const HotelList: React.FC = () => {
   };
 
   const columns = [
-    { title: 'Name', dataIndex: 'name', key: 'name' },
-    { title: 'Address', dataIndex: 'address', key: 'address' },
-    { title: 'Star', dataIndex: 'starRating', key: 'starRating' },
+    { title: '名称', dataIndex: 'name', key: 'name' },
+    { title: '地址', dataIndex: 'address', key: 'address' },
+    { title: '星级', dataIndex: 'starRating', key: 'starRating' },
     { 
-        title: 'Status', 
+        title: '状态', 
         dataIndex: 'status', 
         key: 'status',
         render: (status: string) => (
@@ -37,10 +37,10 @@ const HotelList: React.FC = () => {
         )
     },
     {
-      title: 'Action',
+      title: '操作',
       key: 'action',
       render: (_: any, record: any) => (
-        <Button type="link">Edit</Button>
+        <Button type="link">编辑</Button>
       ),
     },
   ];
@@ -48,8 +48,8 @@ const HotelList: React.FC = () => {
   return (
     <div style={{ background: '#fff', padding: 24 }}>
         <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2>My Hotels</h2>
-            <Button type="primary" onClick={() => window.location.href = '/merchant/create'}>Add New Hotel</Button>
+            <h2>我的酒店</h2>
+            <Button type="primary" onClick={() => window.location.href = '/merchant/create'}>添加新酒店</Button>
         </div>
         <Table dataSource={hotels} columns={columns} loading={loading} rowKey="id" />
     </div>

@@ -16,15 +16,15 @@ const MerchantDashboard: React.FC = () => {
     const items: MenuProps['items'] = [
         {
             key: '1',
-            label: <Link to="/merchant">My Hotels</Link>,
+            label: <Link to="/merchant">我的酒店</Link>,
         },
         {
             key: '2',
-            label: <Link to="/merchant/create">Create Hotel</Link>,
+            label: <Link to="/merchant/create">创建酒店</Link>,
         },
         {
             key: '3',
-            label: 'Logout',
+            label: '退出登录',
             onClick: handleLogout,
         },
     ];

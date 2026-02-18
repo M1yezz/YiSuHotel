@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ConflictException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, UserRole } from './user.entity';
@@ -16,6 +16,13 @@ export class UsersService {
 
   async create(username: string, passwordHash: string, role: UserRole): Promise<User> {
     const user = this.usersRepository.create({ username, passwordHash, role });
-    return this.usersRepository.save(user);
+    try {
+      return await this.usersRepository.save(user);
+    } catch (error: any) {
+      if (error.code === 'ER_DUP_ENTRY') {
+        throw new ConflictException('Username already exists');
+      }
+      throw new InternalServerErrorException();
+    }
   }
 }

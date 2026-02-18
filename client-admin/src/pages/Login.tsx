@@ -11,33 +11,33 @@ const Login: React.FC = () => {
       const { data } = await login(values);
       localStorage.setItem('token', data.access_token);
       localStorage.setItem('role', data.role);
-      message.success('Login successful');
+      message.success('登录成功');
       if (data.role === 'admin') {
         navigate('/admin');
       } else {
         navigate('/merchant');
       }
     } catch (error) {
-      message.error('Login failed');
+      message.error('登录失败');
     }
   };
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f0f2f5' }}>
-      <Card title="Yisu Hotel Management Login" style={{ width: 400 }}>
+      <Card title="易宿酒店管理后台登录" style={{ width: 400 }}>
         <Form onFinish={onFinish}>
-          <Form.Item name="username" rules={[{ required: true, message: 'Please input your username!' }]}>
-            <Input placeholder="Username" />
+          <Form.Item name="username" rules={[{ required: true, message: '请输入用户名！' }]}>
+            <Input placeholder="用户名" />
           </Form.Item>
-          <Form.Item name="password" rules={[{ required: true, message: 'Please input your password!' }]}>
-            <Input.Password placeholder="Password" />
+          <Form.Item name="password" rules={[{ required: true, message: '请输入密码！' }]}>
+            <Input.Password placeholder="密码" />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit" block>
-              Log in
+              登录
             </Button>
             <div style={{ marginTop: 10, textAlign: 'center' }}>
-                Or <Link to="/register">register now!</Link>
+                或 <Link to="/register">立即注册！</Link>
             </div>
           </Form.Item>
         </Form>

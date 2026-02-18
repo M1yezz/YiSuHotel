@@ -15,11 +15,11 @@ const AdminDashboard: React.FC = () => {
     const items: MenuProps['items'] = [
         {
             key: '1',
-            label: <Link to="/admin">Hotel Audit</Link>,
+            label: <Link to="/admin">酒店审核</Link>,
         },
         {
             key: '3',
-            label: 'Logout',
+            label: '退出登录',
             onClick: handleLogout,
         },
     ];

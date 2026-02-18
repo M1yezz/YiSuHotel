@@ -9,35 +9,35 @@ const Register: React.FC = () => {
   const onFinish = async (values: any) => {
     try {
       await register(values);
-      message.success('Registration successful, please login');
+      message.success('注册成功，请登录');
       navigate('/login');
     } catch (error) {
-      message.error('Registration failed');
+      message.error('注册失败');
     }
   };
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f0f2f5' }}>
-      <Card title="Register" style={{ width: 400 }}>
+      <Card title="注册" style={{ width: 400 }}>
         <Form onFinish={onFinish}>
           <Form.Item name="username" rules={[{ required: true }]}>
-            <Input placeholder="Username" />
+            <Input placeholder="用户名" />
           </Form.Item>
           <Form.Item name="password" rules={[{ required: true }]}>
-            <Input.Password placeholder="Password" />
+            <Input.Password placeholder="密码" />
           </Form.Item>
           <Form.Item name="role" initialValue="merchant" rules={[{ required: true }]}>
              <Select>
-                 <Select.Option value="merchant">Merchant</Select.Option>
-                 <Select.Option value="admin">Admin</Select.Option>
+                 <Select.Option value="merchant">商户</Select.Option>
+                 <Select.Option value="admin">管理员</Select.Option>
              </Select>
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit" block>
-              Register
+              注册
             </Button>
             <div style={{ marginTop: 10, textAlign: 'center' }}>
-                <Link to="/login">Back to Login</Link>
+                <Link to="/login">返回登录</Link>
             </div>
           </Form.Item>
         </Form>

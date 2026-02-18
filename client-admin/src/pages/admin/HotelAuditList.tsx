@@ -16,7 +16,7 @@ const HotelAuditList: React.FC = () => {
       const { data } = await client.get('/hotels/admin');
       setHotels(data);
     } catch (error) {
-      message.error('Failed to load hotels');
+      message.error('加载酒店列表失败');
     } finally {
       setLoading(false);
     }
@@ -25,19 +25,19 @@ const HotelAuditList: React.FC = () => {
   const handleAudit = async (id: number, status: 'published' | 'rejected') => {
       try {
           await client.patch(`/hotels/${id}/audit`, { status });
-          message.success(`Hotel ${status} successfully`);
+          message.success('操作成功');
           fetchHotels();
       } catch (error) {
-          message.error('Operation failed');
+          message.error('操作失败');
       }
   };
 
   const columns = [
     { title: 'ID', dataIndex: 'id', key: 'id' },
-    { title: 'Name', dataIndex: 'name', key: 'name' },
-    { title: 'Merchant', dataIndex: ['merchant', 'username'], key: 'merchant' },
+    { title: '名称', dataIndex: 'name', key: 'name' },
+    { title: '商户', dataIndex: ['merchant', 'username'], key: 'merchant' },
     { 
-        title: 'Status', 
+        title: '状态', 
         dataIndex: 'status', 
         key: 'status',
         render: (status: string) => (
@@ -46,20 +46,20 @@ const HotelAuditList: React.FC = () => {
             </Tag>
         )
     },
-    { title: 'Created At', dataIndex: 'createdAt', key: 'createdAt', render: (val: string) => new Date(val).toLocaleDateString() },
+    { title: '创建时间', dataIndex: 'createdAt', key: 'createdAt', render: (val: string) => new Date(val).toLocaleDateString() },
     {
-      title: 'Action',
+      title: '操作',
       key: 'action',
       render: (_: any, record: any) => (
         <Space>
             {record.status === 'pending' && (
                 <>
-                    <Button type="primary" size="small" onClick={() => handleAudit(record.id, 'published')}>Approve</Button>
-                    <Button danger size="small" onClick={() => handleAudit(record.id, 'rejected')}>Reject</Button>
+                    <Button type="primary" size="small" onClick={() => handleAudit(record.id, 'published')}>通过</Button>
+                    <Button danger size="small" onClick={() => handleAudit(record.id, 'rejected')}>拒绝</Button>
                 </>
             )}
             {record.status === 'published' && (
-                 <Button danger size="small" onClick={() => handleAudit(record.id, 'offline')}>Offline</Button>
+                 <Button danger size="small" onClick={() => handleAudit(record.id, 'offline')}>下架</Button>
             )}
         </Space>
       ),
@@ -68,7 +68,7 @@ const HotelAuditList: React.FC = () => {
 
   return (
       <div style={{ background: '#fff', padding: 24 }}>
-          <h2>Hotel Audit Management</h2>
+          <h2>酒店审核管理</h2>
           <Table dataSource={hotels} columns={columns} loading={loading} rowKey="id" />
       </div>
   );
