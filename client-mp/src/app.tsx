@@ -1,5 +1,6 @@
 import React, { Component, PropsWithChildren } from 'react'
 import { window } from '@tarojs/runtime'
+import { ConfigProvider } from '@antmjs/vantui'
 import '@antmjs/vantui/lib/index.css'
 import './app.scss'
 
@@ -28,12 +29,12 @@ if (typeof globalAny.Node === 'undefined') {
 }
 
 class App extends Component<PropsWithChildren> {
-  componentDidMount () {}
-  componentDidShow () {}
-  componentDidHide () {}
-
   render () {
-    return this.props.children
+    return (
+      <ConfigProvider>
+        {this.props.children}
+      </ConfigProvider>
+    )
   }
 }
 

@@ -1,6 +1,6 @@
 import Taro from '@tarojs/taro';
 
-const baseURL = 'http://localhost:3000'; // Adjust for real device debugging if needed
+const baseURL = 'http://localhost:3000';
 
 const request = async (method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH', url: string, data?: any) => {
   const token = Taro.getStorageSync('token');
@@ -10,12 +10,19 @@ const request = async (method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH', url:
   if (token) {
     header['Authorization'] = `Bearer ${token}`;
   }
+  
+  // Construct URL
+  let finalUrl = baseURL + url;
+  if (method === 'GET' && data) {
+      const query = Object.keys(data).map(key => `${key}=${data[key]}`).join('&');
+      finalUrl += `?${query}`;
+  }
 
   try {
     const res = await Taro.request({
-      url: baseURL + url,
+      url: finalUrl,
       method,
-      data,
+      data: method === 'GET' ? undefined : data,
       header
     });
     
@@ -30,20 +37,13 @@ const request = async (method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH', url:
     }
   } catch (error) {
     console.error('API Error:', error);
-    Taro.showToast({ title: error.message || 'Network Error', icon: 'none' });
+    Taro.showToast({ title: error.message || '网络请求失败', icon: 'none' });
     throw error;
   }
 };
 
 const client = {
-  get: (url: string, params?: any) => {
-      let finalUrl = url;
-      if (params) {
-          const query = Object.keys(params).map(key => `${key}=${params[key]}`).join('&');
-          finalUrl += `?${query}`;
-      }
-      return request('GET', finalUrl);
-  },
+  get: (url: string, params?: any) => request('GET', url, params),
   post: (url: string, data?: any) => request('POST', url, data),
   put: (url: string, data?: any) => request('PUT', url, data),
   patch: (url: string, data?: any) => request('PATCH', url, data),

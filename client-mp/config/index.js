@@ -1,6 +1,6 @@
 const config = {
   projectName: 'client-mp',
-  date: '2023-10-27',
+  date: '2026-02-01',
   designWidth: 750,
   deviceRatio: {
     640: 2.34 / 2,
@@ -26,7 +26,7 @@ const config = {
     }
   },
   cache: {
-    enable: false // Webpack5 cache might cause issues in some envs
+    enable: false 
   },
   mini: {
     postcss: {

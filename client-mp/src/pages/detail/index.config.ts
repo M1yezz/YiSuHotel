@@ -1,3 +1,3 @@
 export default definePageConfig({
-  navigationBarTitleText: 'Hotel Details'
+  navigationBarTitleText: '酒店详情'
 })
