@@ -11,6 +11,7 @@ const Login: React.FC = () => {
       const { data } = await login(values);
       localStorage.setItem('token', data.access_token);
       localStorage.setItem('role', data.role);
+      localStorage.setItem('username', data.username);
       message.success('登录成功');
       if (data.role === 'admin') {
         navigate('/admin');

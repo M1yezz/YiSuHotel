@@ -40,7 +40,10 @@ const HotelList: React.FC = () => {
       title: '操作',
       key: 'action',
       render: (_: any, record: any) => (
-        <Button type="link">编辑</Button>
+        <>
+            <Button type="link" onClick={() => window.location.href = `/merchant/hotels/${record.id}/rooms`}>管理房型</Button>
+            <Button type="link">编辑</Button>
+        </>
       ),
     },
   ];
