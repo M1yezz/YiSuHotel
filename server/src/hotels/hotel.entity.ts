@@ -2,6 +2,12 @@ import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany, CreateDat
 import { User } from '../users/user.entity';
 import { Room } from './room.entity';
 
+export enum HotelType {
+  DOMESTIC = 'domestic',
+  OVERSEAS = 'overseas',
+  HOMESTAY = 'homestay'
+}
+
 export enum HotelStatus {
   PENDING = 'pending',
   PUBLISHED = 'published',
@@ -20,6 +26,12 @@ export class Hotel {
   @Column()
   address: string;
 
+  @Column('double', { nullable: true })
+  latitude: number;
+
+  @Column('double', { nullable: true })
+  longitude: number;
+
   @Column()
   starRating: number;
 
@@ -32,8 +44,18 @@ export class Hotel {
   @Column('text', { nullable: true })
   description: string;
 
-  @Column('simple-array', { nullable: true })
+  @Column('longtext', { nullable: true })
+  storeImg: string;
+
+  @Column('simple-json', { nullable: true })
   images: string[];
+
+  @Column({
+    type: 'enum',
+    enum: HotelType,
+    default: HotelType.DOMESTIC
+  })
+  type: HotelType;
 
   @Column({
     type: 'enum',

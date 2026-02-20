@@ -178,7 +178,7 @@ const Detail: React.FC = () => {
           hotel.rooms.map((room: any) => (
             <View key={room.id} className='room-card'>
               <Image 
-                src={hotel.images?.[0] || 'https://img.yzcdn.cn/vant/ipad.jpeg'} 
+                src={room.roomImg || hotel.images?.[0] || 'https://img.yzcdn.cn/vant/ipad.jpeg'} 
                 className='room-img'
                 mode="aspectFill"
               />
