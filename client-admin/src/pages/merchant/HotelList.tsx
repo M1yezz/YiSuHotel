@@ -30,11 +30,18 @@ const HotelList: React.FC = () => {
         title: '状态', 
         dataIndex: 'status', 
         key: 'status',
-        render: (status: string) => (
-            <Tag color={status === 'published' ? 'green' : status === 'rejected' ? 'red' : 'orange'}>
-                {status.toUpperCase()}
-            </Tag>
-        )
+        render: (status: string) => {
+            const statusMap: Record<string, string> = {
+                'pending': '待审核',
+                'published': '已发布',
+                'rejected': '已拒绝'
+            };
+            return (
+                <Tag color={status === 'published' ? 'green' : status === 'rejected' ? 'red' : 'orange'}>
+                    {statusMap[status] || status}
+                </Tag>
+            );
+        }
     },
     {
       title: '操作',

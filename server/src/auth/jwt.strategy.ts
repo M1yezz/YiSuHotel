@@ -14,6 +14,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    return { userId: payload.sub, username: payload.username, role: payload.role };
+    // 确保返回 id 属性，以适配 TypeORM 的关联对象要求
+    return { id: payload.sub, userId: payload.sub, username: payload.username, role: payload.role };
   }
 }

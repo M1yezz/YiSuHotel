@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Form, Input, Button, Card, message, InputNumber, Select, DatePicker, Upload, Modal } from 'antd';
+import React, { useState, useEffect, useRef } from 'react';
+import { Form, Input, Button, Card, message, InputNumber, Select, DatePicker, Upload, Modal, Alert } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import client from '../../api/client';
@@ -26,6 +26,7 @@ const getBase64 = (file: File): Promise<string> =>
 const CreateHotel: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [form] = Form.useForm();
   
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
@@ -35,6 +36,119 @@ const CreateHotel: React.FC = () => {
   const [fileListStore, setFileListStore] = useState<UploadFile[]>([]);
   // 宣传照片 (多张)
   const [fileListImages, setFileListImages] = useState<UploadFile[]>([]);
+
+  // 地图相关状态
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [mapInstance, setMapInstance] = useState<any>(null);
+  const [markerInstance, setMarkerInstance] = useState<any>(null);
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+
+  // 初始化高德地图
+  useEffect(() => {
+    // 设置安全密钥
+    (window as any)._AMapSecurityConfig = {
+        securityJsCode: '9fdb75216fffd90c4365cd8a11ae714d', 
+    };
+
+    // 检查是否已经加载过高德地图脚本
+    if (!(window as any).AMap) {
+        const loader = document.createElement('script');
+        loader.src = 'https://webapi.amap.com/maps?v=2.0&key=2151941a876875f2677ecb1a07827377&plugin=AMap.PlaceSearch,AMap.AutoComplete,AMap.Geocoder,AMap.ToolBar'; 
+        loader.async = true;
+        loader.onload = initMap;
+        loader.onerror = () => message.error('高德地图加载失败，请检查网络或Key配置');
+        document.head.appendChild(loader);
+    } else {
+        initMap();
+    }
+
+    return () => {
+        if (mapInstance) {
+            mapInstance.destroy();
+        }
+    };
+  }, []);
+
+  const initMap = () => {
+      if (!(window as any).AMap || !mapContainerRef.current) return;
+      const AMap = (window as any).AMap;
+
+      const map = new AMap.Map(mapContainerRef.current, {
+          zoom: 11,
+          center: [116.397428, 39.90923], // 默认中心点：北京天安门
+          resizeEnable: true
+      });
+      
+      map.addControl(new AMap.ToolBar());
+
+      const marker = new AMap.Marker({
+          draggable: true,
+          cursor: 'move',
+          position: map.getCenter() 
+      });
+      marker.setMap(map);
+      setMarkerInstance(marker);
+      setMapInstance(map);
+
+      // 绑定点击地图事件
+      map.on('click', (e: any) => {
+          const lnglat = e.lnglat;
+          updatePosition(lnglat.getLng(), lnglat.getLat(), AMap, marker);
+      });
+
+      // 绑定 marker 拖拽结束事件
+      marker.on('dragend', (e: any) => {
+          const lnglat = e.lnglat;
+          updatePosition(lnglat.getLng(), lnglat.getLat(), AMap, marker);
+      });
+
+      // 地址输入提示
+      const auto = new AMap.AutoComplete({
+          input: "address-input"
+      });
+      
+      const placeSearch = new AMap.PlaceSearch({
+          map: map
+      });
+
+      auto.on("select", (e: any) => {
+          // 如果 poi 本身包含位置信息，直接定位
+          if (e.poi.location) {
+              map.setZoom(15);
+              map.setCenter(e.poi.location);
+              updatePosition(e.poi.location.lng, e.poi.location.lat, AMap, marker);
+          } else {
+              // 否则通过 placeSearch 获取详细信息
+              placeSearch.setCity(e.poi.adcode);
+              placeSearch.search(e.poi.name, (status: string, result: any) => {
+                   if (status === 'complete' && result.info === 'OK') {
+                       // 搜索成功，取第一个结果的位置
+                       const poi = result.poiList.pois[0];
+                       if (poi && poi.location) {
+                           map.setZoom(15);
+                           map.setCenter(poi.location);
+                           updatePosition(poi.location.lng, poi.location.lat, AMap, marker);
+                       }
+                   }
+              });
+          }
+      });
+  };
+
+  const updatePosition = (lng: number, lat: number, AMap: any, marker: any) => {
+      setLongitude(lng);
+      setLatitude(lat);
+      marker.setPosition([lng, lat]);
+      // 反向地理编码获取地址（可选，覆盖输入框）
+      const geocoder = new AMap.Geocoder();
+      geocoder.getAddress([lng, lat], (status: string, result: any) => {
+          if (status === 'complete' && result.regeocode) {
+              const address = result.regeocode.formattedAddress;
+              form.setFieldsValue({ address: address });
+          }
+      });
+  };
 
   const handleCancel = () => setPreviewOpen(false);
 
@@ -72,6 +186,11 @@ const CreateHotel: React.FC = () => {
           openingDate: values.openingDate ? values.openingDate.format('YYYY-MM-DD') : undefined,
           storeImg: storeImgUrl,
           images: imagesUrls,
+          latitude: latitude, // 传入经纬度
+          longitude: longitude,
+          // 显式添加 merchantId，确保酒店能关联到当前用户
+          merchant: { id: localStorage.getItem('userId') ? Number(localStorage.getItem('userId')) : undefined },
+          merchantId: localStorage.getItem('userId') ? Number(localStorage.getItem('userId')) : undefined 
       };
       
       const { data } = await client.post('/hotels', payload);
@@ -93,14 +212,30 @@ const CreateHotel: React.FC = () => {
   );
 
   return (
-    <Card title="创建新酒店 (第一层: 基础信息)">
-      <Form layout="vertical" onFinish={onFinish}>
+    <Card title="创建新酒店">
+      <Form layout="vertical" onFinish={onFinish} form={form}>
         <Form.Item name="name" label="酒店名称" rules={[{ required: true, message: '请输入酒店名称' }]}>
           <Input placeholder="例如：君悦酒店" />
         </Form.Item>
         
-        <Form.Item name="address" label="地址" rules={[{ required: true, message: '请输入酒店地址' }]}>
-          <Input placeholder="例如：北京市朝阳区..." />
+        <Form.Item name="address" label="地址" rules={[{ required: true, message: '请输入酒店地址' }]} help="在下方地图搜索地址，点击地图可修正定位">
+          <Input id="address-input" placeholder="请输入关键字搜索地址..." />
+        </Form.Item>
+
+        {/* 地图容器 */}
+        <div style={{ marginBottom: 24, border: '1px solid #d9d9d9', borderRadius: 4 }}>
+            <div ref={mapContainerRef} style={{ width: '100%', height: '300px' }} />
+            <div style={{ padding: 8, background: '#f5f5f5', fontSize: 12 }}>
+                当前定位：经度 {longitude || '-'}，纬度 {latitude || '-'}
+            </div>
+        </div>
+
+        <Form.Item name="type" label="酒店类型" rules={[{ required: true, message: '请选择酒店类型' }]}>
+          <Select placeholder="请选择酒店类型">
+            <Option value="domestic">国内</Option>
+            <Option value="overseas">海外</Option>
+            <Option value="homestay">民宿</Option>
+          </Select>
         </Form.Item>
 
         <Form.Item name="openingDate" label="开业日期" rules={[{ required: true, message: '请选择开业日期' }]}>

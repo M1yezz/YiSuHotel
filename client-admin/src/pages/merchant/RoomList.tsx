@@ -67,7 +67,16 @@ const RoomList: React.FC = () => {
           ? (fileList[0].url || fileList[0].thumbUrl || await getBase64(fileList[0].originFileObj as File)) 
           : '';
 
-      const newRoom = { ...values, image: imageUrl };
+      const newRoom = { 
+        ...values, 
+        roomImg: imageUrl,
+        price: Number(values.price),
+        stock: Number(values.stock)
+      };
+      
+      // 注意：这里需要确保 newRooms 里的旧数据结构也是完整的，或者至少包含 id
+      // 如果后端 update 逻辑是直接替换 rooms，那么需要小心
+      // TypeORM 的 cascade: true 通常会处理好新增和更新
       const newRooms = [...rooms, newRoom];
       
       await client.patch(`/hotels/${id}`, { rooms: newRooms });
@@ -94,8 +103,8 @@ const RoomList: React.FC = () => {
     { title: '库存', dataIndex: 'stock', key: 'stock' },
     {
       title: '图片',
-      dataIndex: 'image',
-      key: 'image',
+      dataIndex: 'roomImg',
+      key: 'roomImg',
       render: (text: string) => text ? <img src={text} alt="room" style={{ height: 40 }} /> : '无',
     },
     {
@@ -112,7 +121,7 @@ const RoomList: React.FC = () => {
         <div style={{ marginBottom: 16 }}>
             <Button onClick={() => navigate('/merchant')}>返回酒店列表</Button>
         </div>
-        <Card title={`管理房型 - ${hotel?.name || ''} (第二层: 房型信息)`}>
+        <Card title={`管理房型 - ${hotel?.name || ''}`}>
             <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end' }}>
                 <Button type="primary" onClick={() => setIsModalVisible(true)}>添加新房型</Button>
             </div>
@@ -124,6 +133,8 @@ const RoomList: React.FC = () => {
             open={isModalVisible}
             onCancel={() => setIsModalVisible(false)}
             onOk={() => form.submit()}
+            okText="确认"
+            cancelText="取消"
         >
             <Form form={form} layout="vertical" onFinish={handleAddRoom}>
                 <Form.Item name="title" label="房型名称" rules={[{ required: true }]}>
@@ -135,7 +146,7 @@ const RoomList: React.FC = () => {
                 <Form.Item name="stock" label="库存" rules={[{ required: true }]}>
                     <InputNumber style={{ width: '100%' }} min={0} />
                 </Form.Item>
-                 <Form.Item label="房型图片 (蓝圈所示)">
+                 <Form.Item label="房型图片">
                     <Upload
                       listType="picture-card"
                       fileList={fileList}

@@ -15,9 +15,10 @@ export class HotelsService {
   ) {}
 
   async create(createHotelDto: any, merchant: User): Promise<Hotel> {
+    const merchantObj = merchant as any;
     const hotel = this.hotelsRepository.create({
       ...createHotelDto,
-      merchant,
+      merchant: { id: merchant.id || merchantObj.userId } as User, // 显式构造包含 id 的 User 对象
       status: HotelStatus.PENDING,
     } as Hotel);
     return this.hotelsRepository.save(hotel);
@@ -141,7 +142,8 @@ export class HotelsService {
   async findByMerchant(merchantId: number): Promise<Hotel[]> {
       return this.hotelsRepository.find({
           where: { merchant: { id: merchantId } },
-          relations: ['rooms']
+          relations: ['rooms'],
+          order: { createdAt: 'DESC' }
       });
   }
 

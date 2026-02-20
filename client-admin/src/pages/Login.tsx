@@ -11,7 +11,13 @@ const Login: React.FC = () => {
       const { data } = await login(values);
       localStorage.setItem('token', data.access_token);
       localStorage.setItem('role', data.role);
-      localStorage.setItem('username', data.username);
+      // 后端可能未返回 username，直接使用前端表单输入的用户名
+      localStorage.setItem('username', values.username);
+      // 将 userId 存储起来，用于后续创建酒店时作为 merchantId 提交
+      // 后端返回的 userId 字段名可能是 userId 或 id，这里做个兼容
+      if (data.userId || data.id) {
+        localStorage.setItem('userId', data.userId || data.id);
+      }
       message.success('登录成功');
       if (data.role === 'admin') {
         navigate('/admin');
