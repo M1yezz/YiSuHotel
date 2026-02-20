@@ -15,6 +15,9 @@ export class Room {
   @Column({ default: 0 })
   stock: number;
 
+  @Column('longtext', { nullable: true })
+  roomImg: string;
+
   @ManyToOne(() => Hotel, hotel => hotel.rooms, { onDelete: 'CASCADE' })
   hotel: Hotel;
 }

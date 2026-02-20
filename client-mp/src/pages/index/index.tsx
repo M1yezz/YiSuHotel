@@ -34,10 +34,36 @@ const Index: React.FC = () => {
   const [guestCount, setGuestCount] = useState(1);
   const [roomCount, setRoomCount] = useState(1);
 
+  // Price & Star Filter
+  const [showFilterPopup, setShowFilterPopup] = useState(false);
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [selectedStar, setSelectedStar] = useState<string>('');
+  
+  const starOptions = [
+      { label: '3星及以下', value: '0,3', min: 0, max: 3 },
+      { label: '3-4星', value: '3,4', min: 3, max: 4 },
+      { label: '4-5星', value: '4,5', min: 4, max: 5 }
+  ];
+
   // City & Location
   const [city, setCity] = useState('');
   const [showCityPopup, setShowCityPopup] = useState(false);
-  const cityList = ['全部', '镇江', '南京', '上海', '北京', '苏州', '杭州'];
+  
+  const domesticCities = ['全部', '北京', '上海', '广州', '深圳', '杭州', '南京', '苏州', '天津', '武汉', '重庆', '成都', '西安', '长沙', '青岛', '昆明', '大连', '厦门', '沈阳', '宁波', '郑州', '无锡', '福州', '哈尔滨', '济南', '佛山', '东莞', '烟台', '合肥', '石家庄', '南宁', '长春', '南昌', '太原', '镇江'];
+  const overseasCountries = ['全部', '日本', '泰国', '新加坡', '韩国', '马来西亚', '美国', '英国', '澳大利亚', '加拿大', '法国', '德国', '意大利', '迪拜', '马尔代夫', '巴厘岛', '越南', '印度尼西亚', '俄罗斯', '新西兰'];
+  
+  const currentCityList = activeTab === 1 ? overseasCountries : domesticCities; // 1 is overseas
+
+  const facilityMap: Record<string, string> = {
+      'Wifi': '无线网络',
+      'Parking': '停车场',
+      'Pool': '游泳池',
+      'Gym': '健身房',
+      'Restaurant': '餐厅',
+      'Meeting': '会议室',
+      'Spa': '水疗中心'
+  };
 
   const formatDate = (date: Date) => `${date.getMonth() + 1}月${date.getDate()}日`;
   const getDayDiff = (d1: Date, d2: Date) => {
@@ -45,7 +71,7 @@ const Index: React.FC = () => {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
   };
 
-  const fetchHotels = async (isRefresh = false) => {
+  const fetchHotels = async (isRefresh = false, tabIndex = activeTab, cityOverride?: string, lat?: number, lng?: number) => {
     if (loading || (!hasMore && !isRefresh)) return;
     setLoading(true);
     try {
@@ -57,7 +83,36 @@ const Index: React.FC = () => {
       };
       
       if (keyword) queryParams.keyword = keyword;
-      if (city && city !== '全部') queryParams.city = city;
+      const targetCity = cityOverride !== undefined ? cityOverride : city;
+      if (targetCity && targetCity !== '全部') queryParams.city = targetCity;
+      
+      // Use passed lat/lng or fallback to state if available
+      const currentLat = lat !== undefined ? lat : userLocation?.lat;
+      const currentLng = lng !== undefined ? lng : userLocation?.lng;
+
+      if (currentLat && currentLng) {
+          queryParams.userLat = currentLat;
+          queryParams.userLng = currentLng;
+      }
+      
+      // Map tab index to type
+      const typeMap = ['domestic', 'overseas', 'homestay'];
+      if (typeMap[tabIndex]) {
+          queryParams.type = typeMap[tabIndex];
+      }
+      
+      // Price & Star Filter
+      if (minPrice) queryParams.minPrice = minPrice;
+      if (maxPrice) queryParams.maxPrice = maxPrice;
+      
+      if (selectedStar) {
+          const option = starOptions.find(o => o.value === selectedStar);
+          if (option) {
+              queryParams.starRating = true; // Flag to enable star filter
+              queryParams.minStar = option.min;
+              queryParams.maxStar = option.max;
+          }
+      }
 
       const res: any = await client.get('/hotels', queryParams);
       
@@ -111,6 +166,22 @@ const Index: React.FC = () => {
     fetchHotels(true);
   };
 
+  const onConfirmFilter = () => {
+      setShowFilterPopup(false);
+      setPage(1);
+      setHasMore(true);
+      setHotels([]);
+      setTimeout(() => {
+          fetchHotels(true);
+      }, 0);
+  };
+
+  const onResetFilter = () => {
+      setMinPrice('');
+      setMaxPrice('');
+      setSelectedStar('');
+  };
+
   const goToDetail = (id: number) => {
     // Pass params via URL
     const params = `?id=${id}&startDate=${dateRange[0].getTime()}&endDate=${dateRange[1].getTime()}&guestCount=${guestCount}&roomCount=${roomCount}`;
@@ -136,20 +207,32 @@ const Index: React.FC = () => {
   const onSelectCity = (c: string) => {
     setCity(c);
     setShowCityPopup(false);
-    fetchHotels(true);
+    // Pass the new city directly to ensure fetch uses the updated value immediately
+    fetchHotels(true, activeTab, c);
   };
 
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+  
   const getLocation = () => {
     Taro.getLocation({
       type: 'wgs84',
       success: function (res) {
-        // Here normally we would reverse geocode coordinates to city name
-        // For now, mock setting it to '当前位置' or keep '镇江' but show toast
         Taro.showToast({ title: '定位成功', icon: 'success' });
-        // Mock city change for demo
-        // setCity('南京'); 
+        setUserLocation({ lat: res.latitude, lng: res.longitude });
+        
+        // Fetch hotels sorted by distance
+        // Assuming we want to reset other filters or just sort current results
+        // Let's reload hotels with location params
+        setPage(1);
+        setHasMore(true);
+        setHotels([]);
+        
+        setTimeout(() => {
+            fetchHotels(true, activeTab, city, res.latitude, res.longitude);
+        }, 0);
       },
-      fail: function () {
+      fail: function (err) {
+        console.error(err);
         Taro.showToast({ title: '定位失败', icon: 'none' });
       }
     });
@@ -173,20 +256,31 @@ const Index: React.FC = () => {
       </Swiper>
       
       <View className='search-card'>
-        <Tabs active={activeTab} onChange={(e) => setActiveTab(e.detail.index)}>
+        <Tabs active={activeTab} onChange={(e) => {
+            setActiveTab(e.detail.index);
+            // Reset pagination and reload hotels when tab changes
+            // e.detail.index: 0 -> domestic, 1 -> overseas, 2 -> homestay
+            setPage(1);
+            setHasMore(true);
+            setCity('全部');
+            setHotels([]); // Clear current list
+            // Explicitly pass '全部' as city to reset filtering for the new tab
+            setTimeout(() => {
+                fetchHotels(true, e.detail.index, '全部');
+            }, 0);
+        }}>
           <Tab title='国内' />
           <Tab title='海外' />
           <Tab title='民宿' />
-          <Tab title='钟点房' />
         </Tabs>
 
         <View className='location-row'>
           <View className='city' onClick={() => setShowCityPopup(true)}>
-            {city || '全部'} <Icon name="arrow-down" size="12px" style={{ marginLeft: 4 }} />
+            {city || '全部'} <Icon name="arrow-down" size="16px" style={{ marginLeft: 4 }} />
           </View>
           <View className='current-location' onClick={getLocation}>
-            <Icon name="aim" size="16px" color="#1989fa" style={{ marginRight: 4 }} />
-            <Text>我的位置</Text>
+            <Icon name="aim" size="20px" color="#1989fa" style={{ marginRight: 4 }} />
+            <Text>附近酒店</Text>
           </View>
         </View>
 
@@ -219,7 +313,11 @@ const Index: React.FC = () => {
 
         <View className='guest-row' onClick={() => setShowGuestPopup(true)}>
           <Text>{roomCount}间房 {guestCount}成人</Text>
-          <Text className='placeholder'>价格/星级</Text>
+          <View onClick={(e) => { e.stopPropagation(); setShowFilterPopup(true); }}>
+            <Text className='placeholder'>{
+                (minPrice || maxPrice || selectedStar) ? '已筛选' : '价格/星级'
+            }</Text>
+          </View>
         </View>
 
         <View className='tags-row'>
@@ -239,7 +337,7 @@ const Index: React.FC = () => {
             <View key={hotel.id} className='hotel-card' onClick={() => goToDetail(hotel.id)}>
               <Image 
                 className='thumb'
-                src={hotel.images?.[0] || 'https://img.yzcdn.cn/vant/ipad.jpeg'}
+                src={hotel.storeImg || hotel.images?.[0] || 'https://img.yzcdn.cn/vant/ipad.jpeg'}
                 mode='aspectFill'
               />
               <View className='content'>
@@ -250,16 +348,21 @@ const Index: React.FC = () => {
                 <View className='score-row'>
                     <View className='score-badge'>{hotel.starRating || 4.5}</View>
                     <Text className='score-text'>很好</Text>
-                    <Text className='reviews'>195 reviews</Text>
+                    <Text className='reviews'>195 条点评</Text>
                 </View>
 
                 <View className='location-info'>
                     {hotel.address}
+                    {hotel.distance !== undefined && hotel.distance !== null && (
+                         <Text style={{ marginLeft: '8px', color: '#1989fa' }}>
+                             距您直线{hotel.distance > 1000 ? (hotel.distance / 1000).toFixed(1) + 'km' : hotel.distance + '米'}
+                         </Text>
+                    )}
                 </View>
 
                 <View className='tags-info'>
                     {hotel.facilities?.slice(0, 3).map((tag: string, idx: number) => (
-                         <View key={idx} className='feature-tag'>{tag}</View>
+                         <View key={idx} className='feature-tag'>{facilityMap[tag] || tag}</View>
                     ))}
                     {!hotel.facilities?.length && <View className='feature-tag'>暂无标签</View>}
                 </View>
@@ -293,7 +396,7 @@ const Index: React.FC = () => {
         round
       >
         <View style={{ padding: '20px' }}>
-             <View style={{ marginBottom: 20, fontSize: 16, fontWeight: 'bold' }}>选择房间和人数</View>
+             <View style={{ marginBottom: 20, fontSize: 18, fontWeight: 'bold' }}>选择房间和人数</View>
              <CellGroup>
                  <Cell title="房间数">
                      <Stepper value={roomCount} min={1} max={5} onChange={(e) => setRoomCount(e.detail)} />
@@ -307,16 +410,73 @@ const Index: React.FC = () => {
        </Popup>
 
        <Popup
-        show={showCityPopup}
+         show={showFilterPopup}
+         position="bottom"
+         onClose={() => setShowFilterPopup(false)}
+         round
+        >
+          <View style={{ padding: '20px' }}>
+             <View style={{ marginBottom: 20, fontSize: 18, fontWeight: 'bold' }}>价格与星级</View>
+             
+             <View style={{ marginBottom: 16 }}>
+                 <Text style={{ fontSize: 16, color: '#333', marginBottom: 8, display: 'block' }}>价格区间 (¥)</Text>
+                 <View style={{ display: 'flex', alignItems: 'center' }}>
+                     <Field
+                        value={minPrice}
+                        placeholder="最低价"
+                        type="number"
+                        border={false}
+                        onChange={(e) => setMinPrice(e.detail)}
+                        style={{ background: '#f7f8fa', padding: '8px 12px', borderRadius: 4, flex: 1, textAlign: 'center', fontSize: '16px' }}
+                     />
+                     <Text style={{ margin: '0 8px', color: '#999' }}>-</Text>
+                     <Field
+                        value={maxPrice}
+                        placeholder="最高价"
+                        type="number"
+                        border={false}
+                        onChange={(e) => setMaxPrice(e.detail)}
+                        style={{ background: '#f7f8fa', padding: '8px 12px', borderRadius: 4, flex: 1, textAlign: 'center', fontSize: '16px' }}
+                     />
+                 </View>
+             </View>
+
+             <View style={{ marginBottom: 24 }}>
+                 <Text style={{ fontSize: 16, color: '#333', marginBottom: 8, display: 'block' }}>星级</Text>
+                 <View style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                     {starOptions.map(opt => (
+                         <Button 
+                            key={opt.value} 
+                            size="small" 
+                            type={selectedStar === opt.value ? 'primary' : 'default'} 
+                            onClick={() => setSelectedStar(selectedStar === opt.value ? '' : opt.value)}
+                            plain={selectedStar !== opt.value}
+                            style={{ fontSize: '14px', height: '32px' }}
+                         >
+                             {opt.label}
+                         </Button>
+                     ))}
+                 </View>
+             </View>
+
+             <View style={{ display: 'flex', gap: 12 }}>
+                 <Button block onClick={onResetFilter} style={{ flex: 1 }}>重置</Button>
+                 <Button type="info" block onClick={onConfirmFilter} style={{ flex: 1 }}>确认</Button>
+             </View>
+          </View>
+        </Popup>
+
+        <Popup
+         show={showCityPopup}
         position="bottom"
         onClose={() => setShowCityPopup(false)}
         round
        >
          <View style={{ padding: '20px' }}>
-            <View style={{ marginBottom: 20, fontSize: 16, fontWeight: 'bold' }}>选择城市</View>
+            <View style={{ marginBottom: 20, fontSize: 18, fontWeight: 'bold' }}>选择城市</View>
             <View style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                {cityList.map(c => (
-                    <Button key={c} size="small" type={city === c ? 'primary' : 'default'} onClick={() => onSelectCity(c)}>
+                {currentCityList.map(c => (
+                    <Button key={c} size="small" type={city === c ? 'primary' : 'default'} onClick={() => onSelectCity(c)} style={{ fontSize: '14px', height: '32px' }}>
                         {c}
                     </Button>
                 ))}
