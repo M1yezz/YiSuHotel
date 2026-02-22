@@ -2,6 +2,7 @@ import React from 'react';
 import { Layout, Menu, MenuProps } from 'antd';
 import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import HotelAuditList from './admin/HotelAuditList';
+import BannerAuditList from './admin/BannerAuditList';
 
 const { Header, Content, Sider } = Layout;
 
@@ -16,6 +17,10 @@ const AdminDashboard: React.FC = () => {
         {
             key: '1',
             label: <Link to="/admin">酒店审核</Link>,
+        },
+        {
+            key: '2',
+            label: <Link to="/admin/banners">广告审核</Link>,
         },
         {
             key: '3',
@@ -35,6 +40,7 @@ const AdminDashboard: React.FC = () => {
         <Content style={{ margin: '16px' }}>
           <Routes>
             <Route path="/" element={<HotelAuditList />} />
+            <Route path="/banners" element={<BannerAuditList />} />
           </Routes>
         </Content>
       </Layout>

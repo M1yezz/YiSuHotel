@@ -28,7 +28,7 @@
       align-items: flex-start;
 
       .name {
-        font-size: 24px;
+        font-size: 32px;
         font-weight: bold;
         color: #333;
         flex: 1;
@@ -53,20 +53,20 @@
         color: #fff;
         border-radius: 4px;
         padding: 2px 6px;
-        font-size: 16px;
+        font-size: 22px;
         font-weight: bold;
         margin-right: 8px;
       }
 
       .score-desc {
-        font-size: 16px;
+        font-size: 22px;
         font-weight: bold;
         color: #1989fa;
         margin-right: 8px;
       }
 
       .reviews {
-        font-size: 14px;
+        font-size: 20px;
         color: #666;
       }
     }
@@ -76,7 +76,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 15px;
+      font-size: 22px;
       color: #333;
 
       .address-text {
@@ -92,7 +92,7 @@
         flex-direction: column;
         align-items: center;
         color: #666;
-        font-size: 12px;
+        font-size: 20px;
       }
     }
 
@@ -107,7 +107,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        font-size: 12px;
+        font-size: 20px;
         color: #666;
         
         .icon-circle {
@@ -138,19 +138,19 @@
       align-items: baseline;
 
       .date {
-        font-size: 18px;
+        font-size: 26px;
         font-weight: bold;
         color: #333;
       }
 
       .weekday {
-        font-size: 14px;
+        font-size: 20px;
         color: #666;
         margin: 0 4px;
       }
 
       .duration {
-        font-size: 14px;
+        font-size: 20px;
         color: #333;
         margin: 0 8px;
       }
@@ -183,14 +183,14 @@
         justify-content: space-between;
 
         .room-name {
-          font-size: 18px;
+          font-size: 26px;
           font-weight: bold;
           color: #333;
           margin-bottom: 4px;
         }
 
         .room-desc {
-          font-size: 14px;
+          font-size: 20px;
           color: #666;
           margin-bottom: 6px;
         }
@@ -203,7 +203,7 @@
           .tag {
             border: 1px solid #e0e0e0;
             color: #666;
-            font-size: 12px;
+            font-size: 20px;
             padding: 2px 6px;
             border-radius: 2px;
           }
@@ -222,7 +222,7 @@
             flex-direction: column;
 
             .original-price {
-                font-size: 14px;
+                font-size: 20px;
                 color: #999;
                 text-decoration: line-through;
                 margin-bottom: 2px;
@@ -234,19 +234,19 @@
             }
 
             .symbol {
-              font-size: 14px;
+              font-size: 20px;
               font-weight: bold;
             }
 
             .val {
-              font-size: 24px;
+              font-size: 32px;
               font-weight: bold;
               line-height: 1;
               margin: 0 2px;
             }
 
             .suffix {
-              font-size: 14px;
+              font-size: 20px;
               color: #999;
             }
           }
@@ -256,7 +256,7 @@
               background: #1989fa;
               color: #fff;
               border-radius: 4px;
-              font-size: 16px;
+              font-size: 22px;
               font-weight: bold;
               padding: 8px 20px;
               border: none;
@@ -270,7 +270,7 @@
       text-align: center;
       padding: 40px 0;
       color: #999;
-      font-size: 14px;
+      font-size: 22px;
     }
   }
   
@@ -279,9 +279,52 @@
 
       .popup-title {
           text-align: center;
-          font-size: 18px;
+          font-size: 40px;
           font-weight: bold;
-          margin-bottom: 16px;
+          margin-bottom: 24px;
       }
+      
+      .van-cell {
+          font-size: 32px !important;
+          padding: 24px 16px;
+      }
+      
+      .van-cell__title {
+          font-size: 32px !important;
+          color: #333;
+      }
+      
+      .van-cell__value {
+          font-size: 32px !important;
+          color: #666;
+      }
+      
+      .van-cell__label {
+          font-size: 28px !important;
+          margin-top: 8px;
+      }
+      
+      .van-button {
+          font-size: 36px !important;
+          height: 64px !important;
+          margin-top: 32px !important;
+      }
+  }
+
+  /* Overrides for Vant components to ensure larger text */
+  .van-cell {
+    font-size: 20px !important;
+  }
+  .van-cell__title {
+    font-size: 20px !important;
+  }
+  .van-cell__value {
+    font-size: 20px !important;
+  }
+  .van-tag {
+    font-size: 18px !important; 
+  }
+  .van-button {
+    font-size: 22px !important;
   }
 }

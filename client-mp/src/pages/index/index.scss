@@ -185,7 +185,7 @@
           align-items: flex-start;
           
           .name {
-            font-size: 24px;
+            font-size: 26px;
             font-weight: bold;
             color: #333;
             line-height: 1.4;
@@ -200,7 +200,7 @@
           .score-badge {
             background: #e1f3ff;
             color: #1989fa;
-            font-size: 16px;
+            font-size: 20px;
             font-weight: bold;
             padding: 2px 8px;
             border-radius: 2px 0 2px 0;
@@ -208,25 +208,35 @@
           }
 
           .score-text {
-            font-size: 16px;
+            font-size: 20px;
             color: #1989fa;
             font-weight: bold;
             margin-right: 8px;
           }
 
           .reviews {
-            font-size: 16px;
+            font-size: 20px;
             color: #999;
           }
         }
 
         .location-info {
-          font-size: 16px;
+          font-size: 20px;
           color: #666;
           margin-top: 4px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
+          display: flex;
+          flex-direction: column;
+
+          .address-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+          
+          .distance-text {
+              color: #1989fa;
+              margin-top: 2px;
+          }
         }
 
         .tags-info {
@@ -236,7 +246,7 @@
           margin-top: 4px;
 
           .feature-tag {
-            font-size: 14px;
+            font-size: 18px;
             padding: 2px 8px;
             border-radius: 2px;
             border: 1px solid #ebedf0;

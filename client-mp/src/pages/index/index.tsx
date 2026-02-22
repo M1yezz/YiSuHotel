@@ -6,17 +6,26 @@ import client from '../../api/client';
 import './index.scss';
 
 const Index: React.FC = () => {
+  const [banners, setBanners] = useState<any[]>([]);
   const [keyword, setKeyword] = useState('');
   const [hotels, setHotels] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   
-  // Banner Data
-  const [banners, setBanners] = useState<any[]>([
-      { id: 1, imageUrl: 'https://img.yzcdn.cn/vant/apple-1.jpg', hotelId: 1 },
-      { id: 2, imageUrl: 'https://img.yzcdn.cn/vant/apple-2.jpg', hotelId: 2 },
-      { id: 3, imageUrl: 'https://img.yzcdn.cn/vant/apple-3.jpg', hotelId: 3 }
-  ]);
+  useEffect(() => {
+    fetchBanners();
+  }, []);
+
+  const fetchBanners = async () => {
+    try {
+      const res: any = await client.get('/banners/public');
+      if (res && res.length > 0) {
+        setBanners(res);
+      }
+    } catch (error) {
+      console.error('Fetch banners failed:', error);
+    }
+  };
 
   // Pagination
   const [page, setPage] = useState(1);
@@ -141,16 +150,7 @@ const Index: React.FC = () => {
     }
   };
 
-  const fetchBanners = async () => {
-      try {
-          const res: any = await client.get('/banners');
-          if (res && res.length > 0) {
-              setBanners(res);
-          }
-      } catch (err) {
-          console.error('Failed to fetch banners', err);
-      }
-  };
+
 
   useEffect(() => {
     fetchHotels(true);
@@ -236,6 +236,21 @@ const Index: React.FC = () => {
         Taro.showToast({ title: '定位失败', icon: 'none' });
       }
     });
+  };
+
+  const getScoreDescription = (score: number) => {
+      if (score >= 4.8) return '优享';
+      if (score >= 4) return '舒适';
+      if (score >= 3) return '良好';
+      if (score >= 2) return '较差';
+      return '很差';
+  };
+
+  const getReviewCount = (id: any) => {
+      if (!id) return 200;
+      // Deterministic random number between 200 and 1000 based on ID
+      const numId = parseInt(String(id).replace(/\D/g, '')) || 0;
+      return (numId * 137) % 801 + 200;
   };
 
   return (
@@ -347,16 +362,16 @@ const Index: React.FC = () => {
                 
                 <View className='score-row'>
                     <View className='score-badge'>{hotel.starRating || 4.5}</View>
-                    <Text className='score-text'>很好</Text>
-                    <Text className='reviews'>195 条点评</Text>
+                    <Text className='score-text'>{getScoreDescription(Number(hotel.starRating || 4.5))}</Text>
+                    <Text className='reviews'>{getReviewCount(hotel.id)} 条点评</Text>
                 </View>
 
                 <View className='location-info'>
-                    {hotel.address}
+                    <View className='address-text'>{hotel.address}</View>
                     {hotel.distance !== undefined && hotel.distance !== null && (
-                         <Text style={{ marginLeft: '8px', color: '#1989fa' }}>
+                         <View className='distance-text'>
                              距您直线{hotel.distance > 1000 ? (hotel.distance / 1000).toFixed(1) + 'km' : hotel.distance + '米'}
-                         </Text>
+                         </View>
                     )}
                 </View>
 

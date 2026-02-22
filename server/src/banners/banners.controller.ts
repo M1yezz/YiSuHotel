@@ -5,9 +5,24 @@ import { BannersService } from './banners.service';
 export class BannersController {
   constructor(private readonly bannersService: BannersService) {}
 
-  @Get()
+  @Get('public')
   findAll() {
     return this.bannersService.findAll();
+  }
+
+  @Get('admin')
+  findAllAdmin() {
+      return this.bannersService.findAllAdmin();
+  }
+
+  @Patch(':id/audit')
+  audit(@Param('id') id: string, @Body('status') status: 'approved' | 'rejected', @Body('reason') reason?: string) {
+      return this.bannersService.audit(+id, status, reason);
+  }
+
+  @Get('hotel/:hotelId')
+  findByHotel(@Param('hotelId') hotelId: string) {
+      return this.bannersService.findByHotel(+hotelId);
   }
 
   @Post()

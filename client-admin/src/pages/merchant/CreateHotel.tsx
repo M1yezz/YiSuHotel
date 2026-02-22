@@ -167,25 +167,54 @@ const CreateHotel: React.FC = () => {
   const handleChangeImages: UploadProps['onChange'] = ({ fileList: newFileList }) =>
     setFileListImages(newFileList);
 
+  // 上传文件到服务器的辅助函数
+  const uploadFile = async (file: File): Promise<string> => {
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+          // 使用 axios client 上传，自动带上 token（如果有）
+          const response = await client.post('/upload', formData, {
+              headers: {
+                  'Content-Type': 'multipart/form-data',
+              },
+          });
+          return response.data.url;
+      } catch (error) {
+          console.error('Upload failed:', error);
+          throw error;
+      }
+  };
+
   const onFinish = async (values: any) => {
     setLoading(true);
     try {
-      // 获取上传后的图片 URL (这里为了演示，如果未接入后端上传接口，可以使用 base64 或 mock url)
-      // 假设 fileList 中已经有了 url (如果上传成功) 或者我们需要传 base64 给后端
-      
-      const storeImgUrl = fileListStore.length > 0 
-          ? (fileListStore[0].url || fileListStore[0].thumbUrl || await getBase64(fileListStore[0].originFileObj as File)) 
-          : '';
+      // 1. 处理门店照片 (单张)
+      let storeImgUrl = '';
+      if (fileListStore.length > 0) {
+          const file = fileListStore[0];
+          if (file.originFileObj) {
+              storeImgUrl = await uploadFile(file.originFileObj as File);
+          } else if (file.url) {
+              storeImgUrl = file.url;
+          }
+      }
           
+      // 2. 处理宣传照片 (多张)
       const imagesUrls = await Promise.all(fileListImages.map(async file => {
-          return file.url || file.thumbUrl || await getBase64(file.originFileObj as File);
+          if (file.originFileObj) {
+              return await uploadFile(file.originFileObj as File);
+          }
+          return file.url || '';
       }));
+
+      // 过滤掉空字符串（如果有上传失败的）
+      const validImagesUrls = imagesUrls.filter(url => !!url);
 
       const payload = {
           ...values,
           openingDate: values.openingDate ? values.openingDate.format('YYYY-MM-DD') : undefined,
           storeImg: storeImgUrl,
-          images: imagesUrls,
+          images: validImagesUrls,
           latitude: latitude, // 传入经纬度
           longitude: longitude,
           // 显式添加 merchantId，确保酒店能关联到当前用户

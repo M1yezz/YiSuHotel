@@ -4,9 +4,12 @@ import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { 
     ShopOutlined, 
     PlusCircleOutlined, 
-    LogoutOutlined,
-    UserOutlined 
+    LogoutOutlined, 
+    UserOutlined,
+    NotificationOutlined
 } from '@ant-design/icons';
+import AdPlacement from './merchant/AdPlacement';
+import MyAds from './merchant/MyAds';
 import HotelList from './merchant/HotelList';
 import CreateHotel from './merchant/CreateHotel';
 import RoomList from './merchant/RoomList';
@@ -32,6 +35,16 @@ const MerchantDashboard: React.FC = () => {
             key: '2',
             icon: <PlusCircleOutlined />,
             label: <Link to="/merchant/create">创建酒店</Link>,
+        },
+        {
+            key: '4',
+            icon: <NotificationOutlined />,
+            label: <Link to="/merchant/ad-placement">投放广告</Link>,
+        },
+        {
+            key: '5',
+            icon: <NotificationOutlined />,
+            label: <Link to="/merchant/my-ads">我的广告</Link>,
         },
         {
             key: '3',
@@ -66,6 +79,8 @@ const MerchantDashboard: React.FC = () => {
           <Routes>
             <Route path="/" element={<HotelList />} />
             <Route path="/create" element={<CreateHotel />} />
+            <Route path="/ad-placement" element={<AdPlacement />} />
+            <Route path="/my-ads" element={<MyAds />} />
             <Route path="/hotels/:id/rooms" element={<RoomList />} />
           </Routes>
         </Content>

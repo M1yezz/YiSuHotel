@@ -14,8 +14,24 @@ export class Banner {
   @Column({ nullable: true })
   hotelId: number; // Optional: Link to a specific hotel
 
-  @Column({ default: true })
+  @Column({ type: 'date', nullable: true })
+  startDate: Date;
+
+  @Column({ type: 'date', nullable: true })
+  endDate: Date;
+
+  @Column({
+    type: 'enum',
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
+  })
+  status: 'pending' | 'approved' | 'rejected';
+
+  @Column({ default: false })
   isActive: boolean;
+
+  @Column({ nullable: true })
+  auditReason: string;
 
   @Column({ default: 0 })
   order: number;

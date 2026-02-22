@@ -21,6 +21,16 @@ const Detail: React.FC = () => {
   const [guestCount, setGuestCount] = useState(1);
   const [roomCount, setRoomCount] = useState(1);
 
+  const facilityMap: Record<string, string> = {
+      'Wifi': '无线网络',
+      'Parking': '停车场',
+      'Pool': '游泳池',
+      'Gym': '健身房',
+      'Restaurant': '餐厅',
+      'Meeting': '会议室',
+      'Spa': '水疗中心'
+  };
+
   useEffect(() => {
     // Parse params
     if (startDate && endDate) {
@@ -77,10 +87,9 @@ const Detail: React.FC = () => {
   };
   
   const openMap = () => {
-      // Mock coordinates if hotel doesn't have them
-      // In real app, hotel.latitude and hotel.longitude should exist
-      const latitude = 32.2044; // Zhenjiang generic
-      const longitude = 119.4546;
+      // Use hotel coordinates or fallback to Zhenjiang generic
+      const latitude = (hotel?.latitude !== null && hotel?.latitude !== undefined) ? Number(hotel.latitude) : 32.2044;
+      const longitude = (hotel?.longitude !== null && hotel?.longitude !== undefined) ? Number(hotel.longitude) : 119.4546;
       
       Taro.openLocation({
           latitude,
@@ -91,13 +100,40 @@ const Detail: React.FC = () => {
       });
   };
   
-  const onConfirmDate = (event: any) => {
-    const [start, end] = event.detail;
-    setDateRange([start, end]);
-    setShowCalendar(false);
+  const handleDateConfirm = (event: any) => {
+    console.log('handleDateConfirm triggered', event);
+    // Defensive check for event.detail
+    let dates = event.detail;
+    
+    // Handle non-standard event structures
+    if (!Array.isArray(dates)) {
+        if (event.detail && Array.isArray(event.detail.value)) {
+            dates = event.detail.value;
+        } else if (Array.isArray(event)) {
+             dates = event;
+        } else {
+             console.error('Unexpected date format:', event);
+             if (event.detail instanceof Date) {
+                 dates = [event.detail, new Date(event.detail.getTime() + 86400000)];
+             } else {
+                 return; 
+             }
+        }
+    }
+    
+    // Use index access instead of destructuring to avoid "Invalid attempt to destructure" error
+    if (Array.isArray(dates)) {
+        if (dates.length >= 2) {
+            setDateRange([new Date(dates[0]), new Date(dates[1])]);
+            setShowCalendar(false);
+        } else if (dates.length === 1) {
+            setDateRange([new Date(dates[0]), new Date(new Date(dates[0]).getTime() + 86400000)]);
+            setShowCalendar(false);
+        }
+    }
   };
 
-  if (!hotel) return <View>Loading...</View>;
+  if (!hotel) return <View>加载中...</View>;
 
   const images = hotel.images && hotel.images.length > 0 
     ? hotel.images 
@@ -105,6 +141,58 @@ const Detail: React.FC = () => {
 
   const nightCount = getDayDiff(dateRange[0], dateRange[1]);
   const totalPrice = selectedRoom ? selectedRoom.price * nightCount * roomCount : 0;
+
+  const getOpeningYear = () => {
+    if (!hotel.openingDate) return '2024';
+    try {
+        const date = new Date(hotel.openingDate);
+        return date.getFullYear();
+    } catch (e) {
+        return '2024';
+    }
+  };
+
+  const getScoreDescription = (score: number) => {
+      if (score >= 4.8) return '优享';
+      if (score >= 4) return '舒适';
+      if (score >= 3) return '良好';
+      if (score >= 2) return '较差';
+      return '很差';
+  };
+
+  const getHotTagText = () => {
+      const address = hotel.address || '';
+      let location = '镇江';
+      
+      // Extract district or city
+      const districtMatch = address.match(/(?:市|^)([^市]+?)区/);
+      const cityMatch = address.match(/(?:省|^)([^省]+?)市/);
+
+      if (districtMatch && districtMatch[1]) {
+          location = districtMatch[1];
+      } else if (cityMatch && cityMatch[1]) {
+          location = cityMatch[1];
+      }
+      
+      // Deterministic random number based on hotel ID to avoid flickering on re-renders
+      // or just use a random number that is stable for this component instance
+      // Using a simple hash of the name or id would be better, but random 1-10 is requested.
+      // We'll use a ref or memo if we want it to be stable, but here simple math on ID might be enough.
+      let num = 1;
+      if (hotel.id) {
+          num = (parseInt(String(hotel.id).replace(/\D/g, '')) % 10) + 1;
+      } else {
+          num = Math.floor(Math.random() * 10) + 1;
+      }
+      
+      return `${location}热卖酒店 No.${num}`;
+  };
+
+  const getReviewCount = (id: any) => {
+      if (!id) return 200;
+      const numId = parseInt(String(id).replace(/\D/g, '')) || 0;
+      return (numId * 137) % 801 + 200;
+  };
 
   return (
     <View className='detail'>
@@ -129,14 +217,14 @@ const Detail: React.FC = () => {
         </View>
 
         <View className='tags-row'>
-            <Tag color="#f2f3f5" textColor="#666">2024年开业</Tag>
-            <Tag color="#fff8e1" textColor="#faad14">镇江影音酒店热卖 No.9</Tag>
+            <Tag color="#f2f3f5" textColor="#666">{getOpeningYear()}年开业</Tag>
+            <Tag color="#fff8e1" textColor="#faad14">{getHotTagText()}</Tag>
         </View>
 
         <View className='score-row'>
             <View className='score-box'>{hotel.starRating || 4.5}</View>
-            <Text className='score-desc'>很好</Text>
-            <Text className='reviews'>195条评论 &gt;</Text>
+            <Text className='score-desc'>{getScoreDescription(Number(hotel.starRating || 4.5))}</Text>
+            <Text className='reviews'>{getReviewCount(hotel.id)}条评论 &gt;</Text>
         </View>
         
         <View className='location-row'>
@@ -151,7 +239,7 @@ const Detail: React.FC = () => {
             {hotel.facilities?.slice(0, 4).map((fac: string, idx: number) => (
                 <View key={idx} className='facility-item'>
                     <View className='icon-circle'><Icon name="star-o" /></View>
-                    <Text>{fac}</Text>
+                    <Text>{facilityMap[fac] || fac}</Text>
                 </View>
             ))}
             {!hotel.facilities?.length && <Text>暂无设施信息</Text>}
@@ -168,8 +256,8 @@ const Detail: React.FC = () => {
             <View className='duration'>共{nightCount}晚</View>
         </View>
         <View style={{display: 'flex', alignItems: 'center'}} onClick={() => setShowGuestPopup(true)}>
-            <Text style={{fontSize: 14, color: '#333'}}>{roomCount}间 {guestCount}人</Text>
-            <Icon name="arrow-down" size="12px" style={{marginLeft: 2}} />
+            <Text style={{fontSize: 18, color: '#333'}}>{roomCount}间 {guestCount}人</Text>
+            <Icon name="arrow-down" size="14px" style={{marginLeft: 2}} />
         </View>
       </View>
 
@@ -184,7 +272,7 @@ const Detail: React.FC = () => {
               />
               <View className='room-content'>
                 <View>
-                    <View className='room-name'>{room.name || '标准间'}</View>
+                    <View className='room-name'>{room.title || '标准间'}</View>
                     <View className='room-desc'>25m² | 有窗 | 双床</View>
                     <View className='room-tags'>
                         <View className='tag'>立即确认</View>
@@ -217,7 +305,7 @@ const Detail: React.FC = () => {
          show={showCalendar}
          type="range"
          onClose={() => setShowCalendar(false)}
-         onConfirm={onConfirmDate}
+         onConfirm={handleDateConfirm}
          color="#1989fa"
       />
 
@@ -228,7 +316,7 @@ const Detail: React.FC = () => {
          round
        >
          <View style={{ padding: '20px' }}>
-              <View style={{ marginBottom: 20, fontSize: 16, fontWeight: 'bold' }}>选择房间和人数</View>
+              <View style={{ marginBottom: 20, fontSize: 24, fontWeight: 'bold' }}>选择房间和人数</View>
               <CellGroup>
                   <Cell title="房间数">
                       <Stepper value={roomCount} min={1} max={5} onChange={(e) => setRoomCount(e.detail)} />
@@ -251,7 +339,7 @@ const Detail: React.FC = () => {
             <View className='popup-title'>确认预订</View>
             <CellGroup>
                 <Cell title="酒店" value={hotel.name} />
-                <Cell title="房型" value={selectedRoom?.name} />
+                <Cell title="房型" value={selectedRoom?.title || '标准间'} />
                 <Cell title="日期" value={`${formatDate(dateRange[0])} - ${formatDate(dateRange[1])} (${nightCount}晚)`} />
                 <Cell title="房间数" value={roomCount} />
                 <Cell title="总价" value={`¥${totalPrice}`} label="在线支付" />
