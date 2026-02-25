@@ -17,7 +17,6 @@ async function bootstrap() {
 
   console.log('Seeding data...');
 
-  // 1. Create a dummy merchant user if not exists
   let merchant = await userRepository.findOne({ where: { username: 'test_merchant' } });
   if (!merchant) {
     merchant = userRepository.create({
@@ -29,7 +28,6 @@ async function bootstrap() {
     console.log('Created merchant user: test_merchant');
   }
 
-  // 2. Create Hotels (Domestic, Overseas, Homestay) with Lat/Lng
   const hotelsData = [
     {
       name: '北京君悦大酒店',
@@ -103,7 +101,6 @@ async function bootstrap() {
       await hotelRepository.save(hotel);
       console.log(`Created hotel: ${hotel.name}`);
 
-      // 3. Create Rooms for each hotel
       const roomsData = [
         { title: '豪华大床房', price: 800, stock: 10, roomImg: 'https://img.yzcdn.cn/vant/apple-1.jpg' },
         { title: '行政双床房', price: 1200, stock: 5, roomImg: 'https://img.yzcdn.cn/vant/apple-2.jpg' },
@@ -123,7 +120,6 @@ async function bootstrap() {
     }
   }
 
-  // 4. Create Banners
   const bannersData = [
       { title: '春节特惠', imageUrl: 'https://img.yzcdn.cn/vant/apple-1.jpg', order: 1, hotelId: 1 },
       { title: '新店开业', imageUrl: 'https://img.yzcdn.cn/vant/apple-2.jpg', order: 2, hotelId: 2 },
@@ -131,7 +127,6 @@ async function bootstrap() {
   ];
 
   for (const bData of bannersData) {
-      // Simple check to avoid duplicates based on title for demo
       const existing = await bannerRepository.findOne({ where: { title: bData.title } });
       if (!existing) {
           const banner = bannerRepository.create(bData);

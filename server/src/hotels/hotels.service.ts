@@ -24,7 +24,6 @@ export class HotelsService {
     return this.hotelsRepository.save(hotel);
   }
 
-  // Helper: Calculate distance between two coordinates in meters
   private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
     const R = 6371e3; // Earth radius in meters
     const φ1 = lat1 * Math.PI / 180;
@@ -41,53 +40,47 @@ export class HotelsService {
   }
 
   async findAllPublic(query: any): Promise<Hotel[]> {
-    const where: any = { status: HotelStatus.PUBLISHED };
+    const qb = this.hotelsRepository.createQueryBuilder('hotel')
+      .leftJoinAndSelect('hotel.rooms', 'room')
+      .where('hotel.status = :status', { status: HotelStatus.PUBLISHED });
+
     if (query.keyword) {
-        where.name = Like(`%${query.keyword}%`);
+      qb.andWhere('(hotel.name LIKE :keyword OR hotel.address LIKE :keyword)', { keyword: `%${query.keyword}%` });
     }
+
     if (query.city) {
-        where.address = Like(`%${query.city}%`);
+      qb.andWhere('hotel.address LIKE :city', { city: `%${query.city}%` });
     }
+
     if (query.type) {
-        where.type = query.type;
+      qb.andWhere('hotel.type = :type', { type: query.type });
     }
     
-    // Star Rating Filter
     if (query.starRating) {
-        // Expected format: "min,max" or "min" or "max"
-        // But user requirement is specific ranges: "3星及以下", "3-4星", "4-5星"
-        // Let's assume frontend sends min and max star
-        // Actually, let's support flexible min/max parameters
-        if (query.minStar && query.maxStar) {
-            where.starRating = Between(query.minStar, query.maxStar);
-        } else if (query.minStar) {
-            where.starRating = MoreThanOrEqual(query.minStar);
-        } else if (query.maxStar) {
-            where.starRating = LessThanOrEqual(query.maxStar);
-        }
+      if (query.minStar && query.maxStar) {
+        qb.andWhere('hotel.starRating BETWEEN :minStar AND :maxStar', { minStar: query.minStar, maxStar: query.maxStar });
+      } else if (query.minStar) {
+        qb.andWhere('hotel.starRating >= :minStar', { minStar: query.minStar });
+      } else if (query.maxStar) {
+        qb.andWhere('hotel.starRating <= :maxStar', { maxStar: query.maxStar });
+      }
     }
 
-    // First, find hotels matching basic criteria
-    let hotels: any[] = await this.hotelsRepository.find({
-        where,
-        relations: ['rooms'],
-        order: { starRating: 'DESC' }
-    });
+    qb.orderBy('hotel.starRating', 'DESC');
 
-    // Price Range Filter (Filter by lowest room price)
+    let hotels: any[] = await qb.getMany();
+
     if (query.minPrice || query.maxPrice) {
         const minPrice = query.minPrice ? parseFloat(query.minPrice) : 0;
         const maxPrice = query.maxPrice ? parseFloat(query.maxPrice) : Infinity;
 
         hotels = hotels.filter(hotel => {
             if (!hotel.rooms || hotel.rooms.length === 0) return false;
-            // Find lowest price room
             const lowestPrice = Math.min(...hotel.rooms.map((r: any) => Number(r.price)));
             return lowestPrice >= minPrice && lowestPrice <= maxPrice;
         });
     }
 
-    // Distance Calculation and Sorting
     if (query.userLat && query.userLng) {
         const userLat = parseFloat(query.userLat);
         const userLng = parseFloat(query.userLng);
@@ -100,8 +93,6 @@ export class HotelsService {
             return { ...hotel, distance: null };
         });
 
-        // Sort by distance (nearest first)
-        // Put hotels with no distance at the end
         hotels.sort((a, b) => {
             if (a.distance === null) return 1;
             if (b.distance === null) return -1;
@@ -126,9 +117,7 @@ export class HotelsService {
       if (hotel.merchant.id !== merchantId) {
           throw new ForbiddenException('Not authorized');
       }
-      // If rooms are updated, handle separately or via cascade
       Object.assign(hotel, updateHotelDto);
-      // Reset status to pending on major updates? Optional.
       return this.hotelsRepository.save(hotel);
   }
   

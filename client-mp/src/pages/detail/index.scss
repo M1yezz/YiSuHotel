@@ -169,8 +169,8 @@
       display: flex;
 
       .room-img {
-        width: 110px;
-        height: 110px;
+        width: 160px;
+        height: 160px;
         border-radius: 6px;
         margin-right: 12px;
         flex-shrink: 0;
@@ -326,5 +326,46 @@
   }
   .van-button {
     font-size: 22px !important;
+  }
+
+  .image-preview-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #000;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .preview-content {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      .preview-image {
+        width: 100%;
+        height: auto;
+        max-height: 90vh;
+      }
+
+      .close-icon {
+        position: absolute;
+        top: 80px; 
+        right: 30px;
+        z-index: 10000;
+        padding: 10px;
+        background: rgba(0,0,0,0.3);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
   }
 }

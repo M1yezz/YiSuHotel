@@ -12,7 +12,7 @@ export class Banner {
   title: string;
 
   @Column({ nullable: true })
-  hotelId: number; // Optional: Link to a specific hotel
+  hotelId: number; 
 
   @Column({ type: 'date', nullable: true })
   startDate: Date;

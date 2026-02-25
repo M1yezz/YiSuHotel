@@ -12,14 +12,21 @@ const Detail: React.FC = () => {
   const [showBooking, setShowBooking] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
   
-  // Date Selection
   const [showCalendar, setShowCalendar] = useState(false);
   const [dateRange, setDateRange] = useState<[Date, Date]>([new Date(), new Date(new Date().getTime() + 86400000)]);
   
-  // Guest Selection
   const [showGuestPopup, setShowGuestPopup] = useState(false);
   const [guestCount, setGuestCount] = useState(1);
   const [roomCount, setRoomCount] = useState(1);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const openPreview = (url: string) => {
+      setPreviewUrl(url);
+  };
+
+  const closePreview = () => {
+      setPreviewUrl(null);
+  };
 
   const facilityMap: Record<string, string> = {
       'Wifi': '无线网络',
@@ -32,7 +39,6 @@ const Detail: React.FC = () => {
   };
 
   useEffect(() => {
-    // Parse params
     if (startDate && endDate) {
         setDateRange([new Date(parseInt(startDate as string)), new Date(parseInt(endDate as string))]);
     }
@@ -72,14 +78,11 @@ const Detail: React.FC = () => {
   const confirmBooking = async () => {
     Taro.showLoading({ title: '提交订单中...' });
     try {
-        // Mock API call to backend
-        // In real app: await client.post('/bookings', { hotelId: hotel.id, roomId: selectedRoom.id, startDate: dateRange[0], endDate: dateRange[1], ... })
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
         Taro.hideLoading();
         setShowBooking(false);
         Taro.showToast({ title: '预订成功', icon: 'success' });
-        // Navigate to Order list or success page
     } catch (error) {
         Taro.hideLoading();
         Taro.showToast({ title: '预订失败', icon: 'none' });
@@ -87,7 +90,6 @@ const Detail: React.FC = () => {
   };
   
   const openMap = () => {
-      // Use hotel coordinates or fallback to Zhenjiang generic
       const latitude = (hotel?.latitude !== null && hotel?.latitude !== undefined) ? Number(hotel.latitude) : 32.2044;
       const longitude = (hotel?.longitude !== null && hotel?.longitude !== undefined) ? Number(hotel.longitude) : 119.4546;
       
@@ -102,10 +104,8 @@ const Detail: React.FC = () => {
   
   const handleDateConfirm = (event: any) => {
     console.log('handleDateConfirm triggered', event);
-    // Defensive check for event.detail
     let dates = event.detail;
     
-    // Handle non-standard event structures
     if (!Array.isArray(dates)) {
         if (event.detail && Array.isArray(event.detail.value)) {
             dates = event.detail.value;
@@ -121,7 +121,6 @@ const Detail: React.FC = () => {
         }
     }
     
-    // Use index access instead of destructuring to avoid "Invalid attempt to destructure" error
     if (Array.isArray(dates)) {
         if (dates.length >= 2) {
             setDateRange([new Date(dates[0]), new Date(dates[1])]);
@@ -174,10 +173,6 @@ const Detail: React.FC = () => {
           location = cityMatch[1];
       }
       
-      // Deterministic random number based on hotel ID to avoid flickering on re-renders
-      // or just use a random number that is stable for this component instance
-      // Using a simple hash of the name or id would be better, but random 1-10 is requested.
-      // We'll use a ref or memo if we want it to be stable, but here simple math on ID might be enough.
       let num = 1;
       if (hotel.id) {
           num = (parseInt(String(hotel.id).replace(/\D/g, '')) % 10) + 1;
@@ -196,6 +191,16 @@ const Detail: React.FC = () => {
 
   return (
     <View className='detail'>
+      {previewUrl && (
+          <View className='image-preview-overlay'>
+              <View className='preview-content'>
+                  <Image src={previewUrl} className='preview-image' mode='widthFix' />
+                  <View className='close-icon' onClick={closePreview}>
+                      <Icon name="cross" size="30px" color="#fff" />
+                  </View>
+              </View>
+          </View>
+      )}
       <Swiper
         className='banner-swiper'
         indicatorColor='#999'
@@ -269,6 +274,7 @@ const Detail: React.FC = () => {
                 src={room.roomImg || hotel.images?.[0] || 'https://img.yzcdn.cn/vant/ipad.jpeg'} 
                 className='room-img'
                 mode="aspectFill"
+                onClick={() => openPreview(room.roomImg || hotel.images?.[0] || 'https://img.yzcdn.cn/vant/ipad.jpeg')}
               />
               <View className='room-content'>
                 <View>

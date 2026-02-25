@@ -9,7 +9,6 @@ export class HotelsController {
   @Post()
   @UseGuards(AuthGuard('jwt'))
   create(@Request() req: any, @Body() createHotelDto: any) {
-    // TODO: Check if role is merchant
     return this.hotelsService.create(createHotelDto, req.user);
   }
 
@@ -28,7 +27,6 @@ export class HotelsController {
   @Get('admin')
   @UseGuards(AuthGuard('jwt')) 
   findAllAdmin() {
-      // TODO: Check role admin
       return this.hotelsService.findAllAdmin();
   }
 

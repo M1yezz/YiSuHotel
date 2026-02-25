@@ -13,8 +13,6 @@ dayjs.locale('zh-cn');
 const { Option } = Select;
 const { TextArea } = Input;
 
-// 模拟上传函数（实际项目中应替换为真实上传接口）
-// 暂时返回一个占位图或 base64
 const getBase64 = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();

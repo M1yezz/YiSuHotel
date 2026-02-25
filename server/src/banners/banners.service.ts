@@ -46,7 +46,7 @@ export class BannersService {
   async create(data: any): Promise<Banner> {
     const banner = this.bannersRepository.create({
         ...data,
-        isActive: false, // Default to false until approved
+        isActive: false, 
         status: 'pending'
     });
     return (await this.bannersRepository.save(banner)) as unknown as Banner;

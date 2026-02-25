@@ -27,23 +27,19 @@ const Index: React.FC = () => {
     }
   };
 
-  // Pagination
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  // Date Selection
   const [showCalendar, setShowCalendar] = useState(false);
   const defaultStartDate = new Date();
   const defaultEndDate = new Date();
   defaultEndDate.setDate(defaultEndDate.getDate() + 1);
   const [dateRange, setDateRange] = useState<[Date, Date]>([defaultStartDate, defaultEndDate]);
 
-  // Guest Selection
   const [showGuestPopup, setShowGuestPopup] = useState(false);
   const [guestCount, setGuestCount] = useState(1);
   const [roomCount, setRoomCount] = useState(1);
 
-  // Price & Star Filter
   const [showFilterPopup, setShowFilterPopup] = useState(false);
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
@@ -55,7 +51,6 @@ const Index: React.FC = () => {
       { label: '4-5星', value: '4,5', min: 4, max: 5 }
   ];
 
-  // City & Location
   const [city, setCity] = useState('');
   const [showCityPopup, setShowCityPopup] = useState(false);
   
@@ -85,7 +80,6 @@ const Index: React.FC = () => {
     setLoading(true);
     try {
       const currentPage = isRefresh ? 1 : page;
-      // Note: Backend currently might not support pagination fully, assuming standard limit/offset or similar
       const queryParams: any = {
         page: currentPage,
         limit: 10
@@ -94,8 +88,7 @@ const Index: React.FC = () => {
       if (keyword) queryParams.keyword = keyword;
       const targetCity = cityOverride !== undefined ? cityOverride : city;
       if (targetCity && targetCity !== '全部') queryParams.city = targetCity;
-      
-      // Use passed lat/lng or fallback to state if available
+
       const currentLat = lat !== undefined ? lat : userLocation?.lat;
       const currentLng = lng !== undefined ? lng : userLocation?.lng;
 
@@ -104,20 +97,18 @@ const Index: React.FC = () => {
           queryParams.userLng = currentLng;
       }
       
-      // Map tab index to type
       const typeMap = ['domestic', 'overseas', 'homestay'];
       if (typeMap[tabIndex]) {
           queryParams.type = typeMap[tabIndex];
       }
       
-      // Price & Star Filter
       if (minPrice) queryParams.minPrice = minPrice;
       if (maxPrice) queryParams.maxPrice = maxPrice;
       
       if (selectedStar) {
           const option = starOptions.find(o => o.value === selectedStar);
           if (option) {
-              queryParams.starRating = true; // Flag to enable star filter
+              queryParams.starRating = true; 
               queryParams.minStar = option.min;
               queryParams.maxStar = option.max;
           }
@@ -125,7 +116,6 @@ const Index: React.FC = () => {
 
       const res: any = await client.get('/hotels', queryParams);
       
-      // Mocking pagination response structure if backend returns array directly
       const newHotels = Array.isArray(res) ? res : (res.data || []);
       
       if (isRefresh) {
@@ -155,7 +145,7 @@ const Index: React.FC = () => {
   useEffect(() => {
     fetchHotels(true);
     fetchBanners();
-  }, []); // Initial load
+  }, []);
 
   useReachBottom(() => {
     fetchHotels();
@@ -183,14 +173,11 @@ const Index: React.FC = () => {
   };
 
   const goToDetail = (id: number) => {
-    // Pass params via URL
     const params = `?id=${id}&startDate=${dateRange[0].getTime()}&endDate=${dateRange[1].getTime()}&guestCount=${guestCount}&roomCount=${roomCount}`;
     Taro.navigateTo({ url: `/pages/detail/index${params}` });
   };
 
   const onConfirmDate = (event: any) => {
-    // Vant Weapp Calendar 'range' type returns an array of dates in event.detail
-    // Sometimes it might be wrapped differently depending on version
     let dates = event.detail;
     if (!Array.isArray(dates) && dates.value) {
         dates = dates.value;
@@ -207,7 +194,6 @@ const Index: React.FC = () => {
   const onSelectCity = (c: string) => {
     setCity(c);
     setShowCityPopup(false);
-    // Pass the new city directly to ensure fetch uses the updated value immediately
     fetchHotels(true, activeTab, c);
   };
 
@@ -220,9 +206,6 @@ const Index: React.FC = () => {
         Taro.showToast({ title: '定位成功', icon: 'success' });
         setUserLocation({ lat: res.latitude, lng: res.longitude });
         
-        // Fetch hotels sorted by distance
-        // Assuming we want to reset other filters or just sort current results
-        // Let's reload hotels with location params
         setPage(1);
         setHasMore(true);
         setHotels([]);
@@ -248,7 +231,6 @@ const Index: React.FC = () => {
 
   const getReviewCount = (id: any) => {
       if (!id) return 200;
-      // Deterministic random number between 200 and 1000 based on ID
       const numId = parseInt(String(id).replace(/\D/g, '')) || 0;
       return (numId * 137) % 801 + 200;
   };
@@ -273,13 +255,10 @@ const Index: React.FC = () => {
       <View className='search-card'>
         <Tabs active={activeTab} onChange={(e) => {
             setActiveTab(e.detail.index);
-            // Reset pagination and reload hotels when tab changes
-            // e.detail.index: 0 -> domestic, 1 -> overseas, 2 -> homestay
             setPage(1);
             setHasMore(true);
             setCity('全部');
-            setHotels([]); // Clear current list
-            // Explicitly pass '全部' as city to reset filtering for the new tab
+            setHotels([]);
             setTimeout(() => {
                 fetchHotels(true, e.detail.index, '全部');
             }, 0);

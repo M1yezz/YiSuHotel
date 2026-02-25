@@ -69,7 +69,6 @@ const AdPlacement: React.FC = () => {
     
     setLoading(true);
     try {
-        // Upload image
         let imageUrl = '';
         if (fileList[0].originFileObj) {
             imageUrl = await uploadFile(fileList[0].originFileObj as File);
@@ -84,7 +83,7 @@ const AdPlacement: React.FC = () => {
             startDate: values.dateRange[0].format('YYYY-MM-DD'),
             endDate: values.dateRange[1].format('YYYY-MM-DD'),
             isActive: true,
-            order: 100 // High priority for paid ads
+            order: 100
         };
 
         await client.post('/banners', payload);

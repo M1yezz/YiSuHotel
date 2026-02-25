@@ -18,7 +18,6 @@ const MyAds: React.FC = () => {
           const myHotels = hotelRes.data || [];
           setHotels(myHotels);
 
-          // Fetch ads for each hotel
           const allAds: any[] = [];
           for (const hotel of myHotels) {
               try {
@@ -27,10 +26,9 @@ const MyAds: React.FC = () => {
                       allAds.push(...adRes.data);
                   }
               } catch (e) {
-                  // Ignore if no ads or error
+
               }
           }
-          // Sort by created time
           allAds.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
           setAds(allAds as never[]);
       } catch (error) {

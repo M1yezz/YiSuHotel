@@ -5,7 +5,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import client from '../../api/client';
 import type { UploadFile, UploadProps } from 'antd/es/upload/interface';
 
-// 模拟上传函数
 const getBase64 = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -74,9 +73,6 @@ const RoomList: React.FC = () => {
         stock: Number(values.stock)
       };
       
-      // 注意：这里需要确保 newRooms 里的旧数据结构也是完整的，或者至少包含 id
-      // 如果后端 update 逻辑是直接替换 rooms，那么需要小心
-      // TypeORM 的 cascade: true 通常会处理好新增和更新
       const newRooms = [...rooms, newRoom];
       
       await client.patch(`/hotels/${id}`, { rooms: newRooms });
